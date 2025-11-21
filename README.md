@@ -115,6 +115,9 @@ NODE_ENV=development
 
 baseUrl=https://alaindube.com:2223/api
 
+brokerUrlUser = https://pwa-broker-pirates-2bc1349418b0.herokuapp.com/api/users
+brokerUrlSail = https://pwa-broker-pirates-2bc1349418b0.herokuapp.com/api/ship/sail/
+
 BROKER_CLIENT_SECRET=86cb073d0432640662eb6d3af9e3bc825ed34852abfd158483e293be22bee13e
 BROKER_CLIENT_ID=app_e8b1de42eb39c53f09e6783a18e1a5a7
 ```
