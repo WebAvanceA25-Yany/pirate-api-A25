@@ -6,6 +6,24 @@ import { AppError } from "../errors/AppError";
 const shipService = new ShipService();
 
 export class ShipController {
+
+  // Modifier Gold 
+  updateGold = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { amount } = req.body;
+      
+      if (amount === undefined || typeof amount !== 'number') {
+         throw new AppError("Invalid amount", { statusCode: 400, code: "VALIDATION_ERROR", details: "Amount must be a number." });
+      }
+
+      const ship = await shipService.updateGold(req.params.id, amount);
+      res.status(200).json(ship);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+
   createShip = async (req: Request, res: Response, next: NextFunction) => {
     const ship: CreateShipRequest = req.body;
 

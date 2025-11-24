@@ -5,6 +5,22 @@ import { eq } from "drizzle-orm";
 import { AppError } from "../errors/AppError";
 
 export class ShipRepository {
+
+    // La partie pour mettre à jour l'or du navire
+  async updateGoldById(id: string, goldCargo: number): Promise<Ship> {
+    
+    await db.update(ships)
+      .set({ goldCargo: goldCargo }) 
+      .where(eq(ships.id, id));
+
+    const result = await this.findById(id);
+    
+    if (!result) throw new AppError("Failed to patch ship, likely doesn't exist.", { statusCode: 500, isOperational: false });
+    return result;
+  }
+
+
+  
   async findById(id: string): Promise<Ship | null> {
     const result = await db.select().from(ships).where(eq(ships.id, id));
     return result[0] || null;

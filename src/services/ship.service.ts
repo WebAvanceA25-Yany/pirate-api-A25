@@ -4,6 +4,7 @@ import { AppError } from "../errors/AppError";
 import {
   validateAndGenerateNewShip,
   validateAndGenerateReceivedShip,
+  validateAndCalculateNewGold,
   validateBaseParameters
 } from "../utils/typeConverter";
 import * as axios from "axios";
@@ -11,6 +12,18 @@ import * as axios from "axios";
 const shipRepository = new ShipRepository();
 
 export class ShipService {
+
+   // ajouter ou retirer Or au navire
+  async updateGold(id: string, amount: number): Promise<Ship> {
+    const ship = await shipRepository.findById(id);
+    if (!ship) {
+      throw new AppError("Ship not found", { statusCode: 404, code: "VALIDATION_ERROR", details: "Ship not found" });
+    }
+    const newGold = validateAndCalculateNewGold(ship.goldCargo, amount);
+    return shipRepository.updateGoldById(id, newGold);
+  }
+
+  
   async getShipById(id: string): Promise<Ship | null> {
     return shipRepository.findById(id);
   }

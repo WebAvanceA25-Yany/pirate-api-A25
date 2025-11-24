@@ -17,6 +17,7 @@ export interface CreateShipRequest {
   crewSize: number;
 }
 
+
 export interface ReceiveShipRequest {
   name: string;
   goldCargo: number;
@@ -32,6 +33,10 @@ export interface PatchShipRequest {
   goldCargo: number;
   captain: string;
   crewSize: number;
+}
+
+export interface UpdateGoldRequest {
+  amount: number;
 }
 
 export interface CreateNewShipDBRequest {
