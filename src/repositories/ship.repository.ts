@@ -10,29 +10,13 @@ export class ShipRepository {
     await db.transaction(callback);
   }
 
-  async incrementPillagedCountTx(id: string, newCount: number, tx: any): Promise<void> {
-    await tx.update(ships)
-      .set({ pillagedCount: newCount })
-      .where(eq(ships.id, id));
-  }
-  
-  // 2. Récupérer un navire en le VERROUILLANT (SELECT ... FOR UPDATE)
-  // On force l'utilisation de 'tx' ici car cela doit se faire dans une transaction
-  async getShipForUpdate(id: string, tx: any): Promise<Ship | null> {
-    const result = await tx.select()
-      .from(ships)
-      .where(eq(ships.id, id))
-      .for('update'); // Verrouillage SQL
+  async incrementPillagedCount(id: string, newCount: number): Promise<void> {
+  await db.update(ships)
+    .set({ pillagedCount: newCount })
+    .where(eq(ships.id, id));
+}
 
-    return result[0] || null;
-  }
 
-  // 3. Mettre à jour l'or avec l'objet transaction
-  async updateGoldTx(id: string, newAmount: number, tx: any): Promise<void> {
-    await tx.update(ships)
-      .set({ goldCargo: newAmount })
-      .where(eq(ships.id, id));
-  }
 
   // La partie pour mettre à jour le crew du navire
   async updateCrewById(id: string, crewSize: number): Promise<Ship> {
