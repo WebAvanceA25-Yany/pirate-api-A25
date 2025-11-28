@@ -15,67 +15,67 @@ const shipRepository = new ShipRepository();
 export class ShipService {
 
   // partie faite par IA mais j'ai comrpis 
-  private static activeTransfers = new Map<string, boolean>();
-
-
+  
+  
   async transferGold(data: TransferGoldRequest): Promise<void> {
-    const { fromShipId, toShipId, amount } = data;
 
-    // Vérifications de base
-    if (amount <= 0) throw new AppError("Le montant doit être positif", { statusCode: 400 });
-    if (fromShipId === toShipId) throw new AppError("Même navire", { statusCode: 400 });
+  const activeTransfers = new Map<string, boolean>();
+  const { fromShipId, toShipId, amount } = data;
 
-    // On vérifie si l'un des navires est déjà utilisé
-    if (ShipService.activeTransfers.has(fromShipId) || ShipService.activeTransfers.has(toShipId)) {
-      
-      // On signale aux transactions en cours qu'il y a eu un crash (on les "tue" à distance)
-      if (ShipService.activeTransfers.has(fromShipId)) ShipService.activeTransfers.set(fromShipId, true);
-      if (ShipService.activeTransfers.has(toShipId)) ShipService.activeTransfers.set(toShipId, true);
+  // Vérifications de base
+  if (amount <= 0) throw new AppError("Le montant doit être positif", { statusCode: 400 });
+  if (fromShipId === toShipId) throw new AppError("Même navire", { statusCode: 400 });
 
-      // Et on s'annule soi-même immédiatement
-      throw new AppError("Interférence détectée ! Une autre transaction est en cours. Abandon des deux opérations.", { statusCode: 409 });
-    }
+  // Vérifier si l'un des navires est déjà utilisé
+  if (activeTransfers.has(fromShipId) || activeTransfers.has(toShipId)) {
 
-    // Si la voie est libre, on ecrit Collision = false 
-    ShipService.activeTransfers.set(fromShipId, false);
-    ShipService.activeTransfers.set(toShipId, false);
-
-    try {
-      await shipRepository.useTransaction(async (tx) => {
-        
-        // A. Verrouillage SQL (pour empêcher d'autres lectures dans bd
-        const sourceShip = await shipRepository.getShipForUpdate(fromShipId, tx);
-        const destShip = await shipRepository.getShipForUpdate(toShipId, tx);
-
-        if (!sourceShip || !destShip) throw new AppError("Navire introuvable", { statusCode: 404 });
-        if (sourceShip.goldCargo < amount) throw new AppError("Fonds insuffisants", { statusCode: 400 });
-
-        // B. Simulation du temps long (8 seconde)
-        console.log(` Transfert en cours... (${amount} or)`);
-        await new Promise((resolve) => setTimeout(resolve, 8000));
-
-        // C. VERIFICATION POST-PAUSE (Le moment de vérité pour la transaction A)
-        // Est-ce que quelqu'un m'a rentré dedans pendant que je dormais ?
-        const collisionFrom = ShipService.activeTransfers.get(fromShipId);
-        const collisionTo = ShipService.activeTransfers.get(toShipId);
-
-        if (collisionFrom === true || collisionTo === true) {
-          console.log("Annulation de la transaction en raison d'une interférence détectée.");
-          throw new AppError("Transaction annulée car une interférence a eu lieu pendant le traitement.", { statusCode: 409 });
-        }
-
-        // D. Tout est calme, on applique les modifications
-        await shipRepository.updateGoldTx(fromShipId, sourceShip.goldCargo - amount, tx);
-        await shipRepository.updateGoldTx(toShipId, destShip.goldCargo + amount, tx);
-
-        console.log("Transfert réussi.");
-      });
-
-    } finally {
-      ShipService.activeTransfers.delete(fromShipId);
-      ShipService.activeTransfers.delete(toShipId);
-    }
+    if (activeTransfers.has(fromShipId)) activeTransfers.set(fromShipId, false); // false = collision détectée
+    if (activeTransfers.has(toShipId)) activeTransfers.set(toShipId, false);
+    
+    throw new AppError("Collision détectée ! Toutes les transactions impliquées sont annulées.", { statusCode: 409 });
   }
+
+  // Réserver les navires avec true = "pas de collision pour l'instant"
+  activeTransfers.set(fromShipId, true);
+  activeTransfers.set(toShipId, true);
+
+  try {
+
+    const sourceShip = await shipRepository.findById(fromShipId);
+    const destShip = await shipRepository.findById(toShipId);
+
+    if (!sourceShip || !destShip) {
+      throw new AppError("Navire introuvable", { statusCode: 404 });
+    }
+
+    if (sourceShip.goldCargo < amount) {
+      throw new AppError("Fonds insuffisants", { statusCode: 400 });
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 8000));
+
+    // 3. VÉRIFICATION POST-PAUSE : est-ce qu'on a été marqué comme.
+    const statusFrom = activeTransfers.get(fromShipId);
+    const statusTo = activeTransfers.get(toShipId);
+
+    if (statusFrom === false || statusTo === false) {
+      console.log(" Transaction annulée : collision détectée pendant le traitement.");
+      throw new AppError("Transaction annulée car une collision a eu lieu pendant le traitement.", { statusCode: 409 });
+    }
+
+    // 4. Tout est OK, on applique les changements
+    await shipRepository.updateGoldById(fromShipId, sourceShip.goldCargo - amount);
+    await shipRepository.updateGoldById(toShipId, destShip.goldCargo + amount);
+    await shipRepository.incrementPillagedCount(fromShipId, (sourceShip.pillagedCount || 0) + 1);
+
+    console.log("Transfert réussi.");
+
+  } finally {
+    // Libérer les navires
+    activeTransfers.delete(fromShipId);
+    activeTransfers.delete(toShipId);
+  }
+}
 
   // ajouter ou retirer des membres d'équipage au navire
   async updateCrew(id: string, amount: number): Promise<Ship> {
