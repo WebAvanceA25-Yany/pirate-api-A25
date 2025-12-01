@@ -40,9 +40,6 @@ export class AuthController {
 
     return res.status(200).json({ message: "Logged out" });
   }
-  checkAdmin = async (req: Request, res: Response, next: NextFunction) => {
-    res.status(200).json({ isAdmin: true });
-  }
 
   me = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -60,7 +57,8 @@ export class AuthController {
           id: user?.id,
           username: user?.username,
           createdAt: user?.createdAt,
-          updatedAt: user?.updatedAt
+          updatedAt: user?.updatedAt,
+          isAdmin: user?.isAdmin
         }
       };
 
