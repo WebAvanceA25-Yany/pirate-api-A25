@@ -8,6 +8,8 @@ export interface Ship {
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
+  // partie ajouter par moi
+  pillagedCount: number;
 }
 
 export interface CreateShipRequest {
@@ -16,6 +18,7 @@ export interface CreateShipRequest {
   captain: string;
   crewSize: number;
 }
+
 
 export interface ReceiveShipRequest {
   name: string;
@@ -32,6 +35,21 @@ export interface PatchShipRequest {
   goldCargo: number;
   captain: string;
   crewSize: number;
+}
+
+// partie ajouter par moi 
+export interface UpdateGoldRequest {
+  amount: number;
+}
+
+export interface UpdateCrewRequest {
+  amount: number;
+}
+
+export interface TransferGoldRequest {
+  fromShipId: string;
+  toShipId: string;
+  amount: number;
 }
 
 export interface CreateNewShipDBRequest {

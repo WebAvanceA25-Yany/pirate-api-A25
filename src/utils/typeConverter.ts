@@ -8,6 +8,52 @@ import {
 import { v4 as uuid } from 'uuid';
 import { AppError } from "../errors/AppError";
 
+
+export const validateAndCalculateNewCrew = (currentCrew: number, amountToAdd: number): number => {
+  const newCrew = currentCrew + amountToAdd;
+
+  if (newCrew < 1) {
+    throw new AppError("On ne peux pas avoir 0", { 
+      statusCode: 400, 
+      code: "VALIDATION_ERROR", 
+      details: `On ne peux pas avoir moins de 1 membre dans le bateau` 
+    });
+  }
+  
+  if (newCrew > 500) {
+    throw new AppError("On ne peux pas depasser 500", { 
+      statusCode: 400, 
+      code: "VALIDATION_ERROR", 
+      details: "Crew size cannot exceed 500." 
+    });
+  }
+
+  return newCrew;
+}
+
+// Valider et calculer le nouvel or du navire
+export const validateAndCalculateNewGold = (currentGold: number, amountToAdd: number): number => {
+  const newGold = currentGold + amountToAdd;
+
+  if (newGold < 0) {
+    throw new AppError("Pas assez de gold", { 
+      statusCode: 400, 
+      code: "VALIDATION_ERROR", 
+      details: `nombre d'or insuffisant dans le bateau.` 
+    });
+  }
+  
+  if (newGold > 1000000) {
+    throw new AppError("Max Gold ", { 
+      statusCode: 400, 
+      code: "VALIDATION_ERROR", 
+      details: "Gold Max est de  1,000,000." 
+    });
+  }
+  return newGold;
+}
+
+
 export const validateBaseParameters = (ship: CreateShipRequest | PatchShipRequest | ReceiveShipRequest, shipReceived: boolean = false, userModification: boolean = true): boolean => {
   const createdAtStr = (ship as ReceiveShipRequest).createdAt;
   const createdAtDate = new Date(createdAtStr);

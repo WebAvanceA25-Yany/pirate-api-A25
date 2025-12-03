@@ -1,11 +1,54 @@
 import { Request, Response, NextFunction } from 'express';
 import { ShipService } from "../services/ship.service";
-import { CreateShipRequest, ReceiveShipRequest } from "../types/ship.types";
+import { CreateShipRequest, ReceiveShipRequest, TransferGoldRequest } from "../types/ship.types";
 import { AppError } from "../errors/AppError";
 
 const shipService = new ShipService();
 
 export class ShipController {
+
+  transferGold = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const transferData: TransferGoldRequest = req.body;
+
+      if (
+        transferData.fromShipId == null ||transferData.toShipId == null || transferData.amount == null
+      ) {
+        throw new AppError("Paramètres manquants", { statusCode: 400 });
+      }
+
+      await shipService.transferGold(transferData);
+
+      res.status(200).json({ message: "Transfert effectué avec succès" });
+    } catch (error) {
+      next(error);
+    }
+  }
+  // Modifier Crew 
+  updateCrew = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const amount = req.body.amount;
+
+      const ship = await shipService.updateCrew(req.params.id, amount);
+      res.status(200).json(ship);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Modifier Gold 
+  updateGold = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const amount = req.body.amount;
+
+      const ship = await shipService.updateGold(req.params.id, amount);
+      res.status(200).json(ship);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+
   createShip = async (req: Request, res: Response, next: NextFunction) => {
     const ship: CreateShipRequest = req.body;
 
