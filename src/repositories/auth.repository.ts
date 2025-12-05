@@ -14,6 +14,19 @@ export class AuthRepository {
     return result[0] || null;
   }
 
+  async setAdmin(id: string): Promise<User | null> {
+
+    const Idresult = await this.findById(id);
+    if (!Idresult) throw new Error('Failed to find user Id');
+    
+    await db.update(users)
+          .set({ isAdmin: true }) 
+          .where(eq(users.id, id));
+        const result = await this.findById(id);
+    return result;
+  }
+
+
   async create(user: { id: string; username: string; passwordHash: string }): Promise<User> {
     await db.insert(users).values(user);
 

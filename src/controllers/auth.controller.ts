@@ -25,6 +25,20 @@ export class AuthController {
     }
   }
 
+  setAdmin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const idChangeAdmin = req.body.id;
+      const updatedUser = await authService.setAdmin(idChangeAdmin);
+
+      res.status(200).json({ 
+        message: 'User promoted to Admin successfully',
+        user : updatedUser 
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   login = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { username, password } = req.body as LoginUserRequest;
